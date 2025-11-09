@@ -29,7 +29,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia todo el contenido (ya estás en la raíz del proyecto)
-COPY . .
+COPY src/ .
 
 # Comando por defecto para ejecutar tu aplicación
 CMD ["python", "main.py"]
