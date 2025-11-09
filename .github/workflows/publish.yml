@@ -20,9 +20,8 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
             
-            - name: Build and push image
+            - name: Build image
               run: |
-                  # Usar todo en minúsculas
                   docker build . --tag ghcr.io/oswaldomh10/pruebavideodocker:latest
                   docker push ghcr.io/oswaldomh10/pruebavideodocker:latest
     
@@ -38,7 +37,7 @@ jobs:
                   sshpass -p '${{secrets.AUTH_PASS}}' ssh -o StrictHostKeyChecking=no ${{secrets.AUTH_USER}}@${{secrets.AUTH_SERVER}} << 'EOF'
                   cd /root
                   docker login ghcr.io -u ${{ github.actor }} -p '${{secrets.GITHUB_TOKEN}}'
-                  docker pull ghcr.io/oswaldomh10/pruebavideodocker:latest
+                  docker pull ghcr.io/${{ github.actor }}/pruebavideodocker:latest
                   docker stop prueba-suma-app || true
                   docker rm prueba-suma-app || true
                   docker run -d \
