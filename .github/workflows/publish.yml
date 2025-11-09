@@ -1,0 +1,50 @@
+name: publish
+
+on:
+    push:
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
+
+jobs:
+    create-docker-image:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout the code
+              uses: actions/checkout@v2
+
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v1
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+            
+            - name: Build image
+              run: |
+                  docker build . --tag ghcr.io/oswaldomh10/pruebavideodocker:latest
+                  docker push ghcr.io/oswaldomh10/pruebavideodocker:latest
+    
+    deploy:
+        needs: create-docker-image
+        runs-on: ubuntu-latest
+        steps:
+            - name: Install sshpass
+              run: sudo apt-get install -y sshpass
+
+            - name: SSH into Server
+              run: |
+                  sshpass -p '${{secrets.AUTH_PASS}}' ssh -o StrictHostKeyChecking=no ${{secrets.AUTH_USER}}@${{secrets.AUTH_SERVER}} << 'EOF'
+                  cd /root
+                  docker login ghcr.io -u ${{ github.actor }} -p '${{secrets.GITHUB_TOKEN}}'
+                  docker pull ghcr.io/oswaldomh10/pruebavideodocker:latest
+                  docker stop prueba-suma-app || true
+                  docker rm prueba-suma-app || true
+                  docker run -d \
+                      --name prueba-suma-app \
+                      -p 3000:3000 \
+                      --restart always \
+                      ghcr.io/oswaldomh10/pruebavideodocker:latest
+                  echo "¡Despliegue completado!"
+                  docker ps
+                  EOF
